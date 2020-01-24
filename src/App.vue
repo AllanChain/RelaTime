@@ -1,11 +1,13 @@
 <template>
   <div id="app">
+    <!-- v-model does not work for files -->
+    <input type="file" @change="handleICS" />
     <div v-if="ready">
-      <button @click="addCat()" :disabled="addDisabled">Add</button>
+      <!-- <button @click="addVevent()" :disabled="addDisabled">Add</button> -->
       <ul>
-        <li v-for="(cat, index) in cats" :key="index">
-          {{cat.name}} is {{cat.age}} years old.
-          <button @click="killCat(cat.id)">Kill</button>
+        <li v-for="(vevent, index) in vevents" :key="index">
+          <!-- {{vevent.name}} is {{vevent.age}} years old. -->
+          <button @click="deleteVevent(vevent.id)">Delete</button>
         </li>
       </ul>
     </div>
@@ -13,27 +15,51 @@
 </template>
 
 <script>
-const DB_NAME = 'catdb'
+const DB_NAME = 'veventdb'
 const DB_VER = 1
 
 export default {
   name: 'app',
-  data () {
+  data() {
     return {
       ready: false,
-      cats: [],
+      vevents: [],
       db: null,
       addDisabled: false
     }
   },
-  async created () {
+  async created() {
     console.log('lsls')
     this.db = await this.getDB()
-    this.cats = await this.getCats()
+    this.vevents = await this.getVevents()
     this.ready = true
   },
   methods: {
-    async getDB () {
+    async handleICS(event) {
+      const file = event.target.files[0]
+      console.log(file)
+      const reader = new FileReader()
+      reader.onload = event => {
+        let icalData = event.target.result
+        let icalObj = new ICAL.Component(ICAL.parse(icalData))
+        let events = icalObj.getAllSubcomponents('vevent')
+        for (let vevent of events) {
+          let event = new ICAL.Event(vevent)
+          let duration = event.duration.toSeconds() * 1000
+          let it = event.iterator()
+          let result = it.next()
+          while (result) {
+            let start = result.toJSDate()
+            let end = new Date(start.getTime() + duration)
+            console.log(start.getHours(), start.getMinutes())
+            console.log(end.getHours(), end.getMinutes())
+            result = it.next()
+          }
+        }
+      }
+      reader.readAsText(file)
+    },
+    async getDB() {
       return new Promise((resolve, reject) => {
         let request = window.indexedDB.open(DB_NAME, DB_VER)
         // When creating the db, `onupgradeneeded` is called
@@ -41,10 +67,12 @@ export default {
         request.onupgradeneeded = e => {
           console.log('onupgrade')
           let db = e.target.result
-          let objectStore = db.createObjectStore('cats', {
+          let objectStore = db.createObjectStore('vevents', {
             autoIncrement: true,
             keyPath: 'id'
           })
+          objectStore.createIndex('start', 'start')
+          objectStore.createIndex('end', 'end')
           console.log(db, objectStore)
         }
         request.onerror = e => {
@@ -57,48 +85,48 @@ export default {
         }
       })
     },
-    async getCats () {
+    async getVevents() {
       return new Promise((resolve, reject) => {
-        let trans = this.db.transaction(['cats'], 'readonly')
-        let store = trans.objectStore('cats')
-        let cats = []
+        let trans = this.db.transaction(['vevents'], 'readonly')
+        let store = trans.objectStore('vevents')
+        let vevents = []
         store.openCursor().onsuccess = e => {
           let cursor = e.target.result
           if (cursor) {
-            cats.push(cursor.value)
+            vevents.push(cursor.value)
             cursor.continue()
           }
         }
-        trans.oncomplete = e => resolve(cats)
+        trans.oncomplete = e => resolve(vevents)
       })
     },
-    async addCat () {
-      this.addDisabled = true
-      const cat = {
-        name: 'Cat' + Math.floor(Math.random() * 100),
-        age: Math.floor(Math.random() * 10) + 1
-      }
-      console.log('adding' + JSON.stringify(cat))
-      await this.addCatToDB(cat)
-      this.cats = await this.getCats()
-      this.addDisabled = false
-    },
-    async addCatToDB (cat) {
+    // async addVevent () {
+    //   this.addDisabled = true
+    //   const vevent = {
+    //     name: 'Vevent' + Math.floor(Math.random() * 100),
+    //     age: Math.floor(Math.random() * 10) + 1
+    //   }
+    //   console.log('adding' + JSON.stringify(vevent))
+    //   await this.addVeventToDB(vevent)
+    //   this.vevents = await this.getVevents()
+    //   this.addDisabled = false
+    // },
+    async addVeventToDB(vevent) {
       return new Promise((resolve, reject) => {
-        let trans = this.db.transaction(['cats'], 'readwrite')
+        let trans = this.db.transaction(['vevents'], 'readwrite')
         trans.oncomplete = e => resolve()
-        trans.objectStore('cats').add(cat)
+        trans.objectStore('vevents').add(vevent)
       })
     },
-    async killCat (id) {
-      await this.deleteCatFromDB(id)
-      this.cats = await this.getCats()
+    async deleteVevent(id) {
+      await this.deleteVeventFromDB(id)
+      this.vevents = await this.getVevents()
     },
-    async deleteCatFromDB (id) {
+    async deleteVeventFromDB(id) {
       return new Promise((resolve, reject) => {
-        let trans = this.db.transaction(['cats'], 'readwrite')
+        let trans = this.db.transaction(['vevents'], 'readwrite')
         trans.oncomplete = e => resolve()
-        trans.objectStore('cats').delete(id)
+        trans.objectStore('vevents').delete(id)
       })
     }
   }
@@ -114,7 +142,7 @@ export default {
   color: #2c3e50;
   margin-top: 60px;
 }
-ul li{
+ul li {
   display: block;
 }
 </style>
