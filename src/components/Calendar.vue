@@ -4,6 +4,7 @@
         height: zoom * 90 + 'vh'
       }">
       <div class="day" v-for="(days, i) in displayList" :key="i">
+        <div class="date">{{i}}</div>
         <div
           class="event"
           v-for="(display, j) in days"
@@ -32,14 +33,14 @@ export default {
   data() {
     return {
       ready: false,
-      db: null,
       addDisabled: false,
+      vevents: [],
       owlMode: 0,
       zoom: 2,
       scroll: 0.2,
       firstDayOfWeek: 1,
-      alpha: 0.9,
-      displayList: []
+      date: new Date(2019, 9, 3),
+      alpha: 0.9
     }
   },
   async created() {
@@ -47,8 +48,6 @@ export default {
     idb.getVevents().then(data => {
       this.vevents = data
       this.ready = true
-      this.parseDisplay(data)
-      console.log(this.displayList)
       Vue.nextTick(() => {
         const container = this.$refs.container
         container.scrollTo({
@@ -57,49 +56,67 @@ export default {
       })
     })
   },
-  methods: {
-    parseDisplay(vevents) {
-      let date = new Date(2019, 9, 30)
-      let dayOfWeek = date.getDay()
-      let startOfWeek = new Date(
-        date.getFullYear(),
-        date.getMonth(),
-        date.getDate() - dayOfWeek + this.firstDayOfWeek,
+  computed: {
+    startOfWeek() {
+      return new Date(
+        this.date.getFullYear(),
+        this.date.getMonth(),
+        this.date.getDate() - this.date.getDay() + this.firstDayOfWeek,
         0,
         0,
         this.owlMode
       )
-      let endOfWeek = new Date(
-        date.getFullYear(),
-        date.getMonth(),
-        date.getDate() - dayOfWeek + this.firstDayOfWeek + 7,
+    },
+    endOfWeek() {
+      return new Date(
+        this.date.getFullYear(),
+        this.date.getMonth(),
+        this.date.getDate() - this.date.getDay() + this.firstDayOfWeek + 7,
         0,
         0,
         this.owlMode
       )
+    },
+    displayList() {
+      let displayList = []
+      for (let i = 0; i < 7; i++) displayList.push([])
       const notSeen = arr => arr.every(x => x >= 0) || arr.every(x => x <= 0)
-      this.displayList = []
-      for (let i = 0; i < 7; i++) this.displayList.push([])
       let result
-      for (let vevent of vevents) {
+      for (let vevent of this.vevents) {
         let event = vevent.event
         let duration = event.duration.toSeconds()
         let it = event.iterator()
         while ((result = it.next())) {
           let start = result.toJSDate()
+          // console.log(start)
+          if (start > this.endOfWeek) break
           let end = new Date(start.getTime() + duration * 1000)
           if (
             !notSeen([
-              start - startOfWeek,
-              start - endOfWeek,
-              end - startOfWeek,
-              end - endOfWeek
+              start - this.startOfWeek,
+              start - this.endOfWeek,
+              end - this.startOfWeek,
+              end - this.endOfWeek
             ])
           ) {
-            let timeDelta = (start.getTime() - startOfWeek.getTime()) / 1000
+            let exclude = false
+            for (let exDate of it.exDates) {
+              exDate = exDate.toJSDate()
+              if (
+                exDate.getFullYear() === start.getFullYear() &&
+                exDate.getMonth() === start.getMonth() &&
+                exDate.getDate() === start.getDate()
+              ) {
+                exclude = true
+                break
+              }
+            }
+            if (exclude) continue
+            let timeDelta =
+              (start.getTime() - this.startOfWeek.getTime()) / 1000
             let day = Math.floor(timeDelta / 86400)
             let c = vevent.color
-            this.displayList[day].push({
+            displayList[day].push({
               course: vevent.course,
               mod: vevent.mod,
               color: `hsla(${c.h}, ${c.s}%, ${c.l}%, ${this.alpha})`,
@@ -109,9 +126,9 @@ export default {
               height: duration / 864 + '%'
             })
           }
-          if (start > endOfWeek) break
         }
       }
+      return displayList
     }
   }
 }
