@@ -7,7 +7,7 @@ export default {
   name: 'idb',
   db: null,
   async init() {
-    this.db = await this.getDB()
+    if (!this.db) this.db = await this.getDB()
   },
   async getDB() {
     return new Promise((resolve, reject) => {

@@ -1,98 +1,27 @@
 <template>
-  <div id="app">
-    <icsProcessor />
-    <div v-if="ready">
-      <!-- <button @click="addVevent()" :disabled="addDisabled">Add</button> -->
-      <ul>
-        <li v-for="(display, index) in displayList" :key="index">
-          {{display.vevent.course}}, {{display.vevent.event.location}} at
-          {{display.day}}, {{display.time}}
-          <!-- <button
-            @click="deleteVevent(vevent.id)"
-          >Delete</button> -->
-        </li>
-      </ul>
-    </div>
+  <div id="app" :style="{ backgroundImage: `url(${bgImg})` }">
+    <ICALProcessor />
+    <Calendar />
   </div>
 </template>
 
 <script>
-import idb from './utils/idb.js'
-import icsProcessor from './components/icsProcessor.vue'
+// import idb from './utils/idb.js'
+import ICALProcessor from './components/ICALProcessor'
+import Calendar from './components/Calendar'
 
 export default {
   name: 'app',
   components: {
-    icsProcessor
+    ICALProcessor,
+    Calendar
   },
   data() {
     return {
-      ready: false,
-      vevents: [],
-      db: null,
-      addDisabled: false,
-      owlMode: 0,
-      firstDayOfWeek: 1,
-      displayList: []
+      bgImg: 'https://allanchain.github.io/webnav/back.jpg'
     }
-  },
-  async created() {
-    await idb.init()
-    idb.getVevents().then(data => {
-      this.vevents = data
-      this.ready = true
-      this.parseDisplay()
-    })
   },
   methods: {
-    parseDisplay() {
-      let date = new Date(2019, 9, 30)
-      let dayOfWeek = date.getDay()
-      let startOfWeek = new Date(
-        date.getFullYear(),
-        date.getMonth(),
-        date.getDate() - dayOfWeek + this.firstDayOfWeek,
-        0,
-        0,
-        this.owlMode
-      )
-      let endOfWeek = new Date(
-        date.getFullYear(),
-        date.getMonth(),
-        date.getDate() - dayOfWeek + this.firstDayOfWeek + 7,
-        0,
-        0,
-        this.owlMode
-      )
-      const notSeen = arr => arr.every(x => x >= 0) || arr.every(x => x <= 0)
-      this.displayList = []
-      let result
-      for (let vevent of this.vevents) {
-        let event = vevent.event
-        let duration = event.duration.toSeconds() * 1000
-        let it = event.iterator()
-        while ((result = it.next())) {
-          let start = result.toJSDate()
-          let end = new Date(start.getTime() + duration)
-          if (
-            !notSeen([
-              start - startOfWeek,
-              start - endOfWeek,
-              end - startOfWeek,
-              end - endOfWeek
-            ])
-          ) {
-            let timeDelta = (start.getTime() - startOfWeek.getTime()) / 1000
-            this.displayList.push({
-              vevent: vevent,
-              day: Math.floor(timeDelta / 86400),
-              time: timeDelta % 86400
-            })
-          }
-          if (start > endOfWeek) break
-        }
-      }
-    }
   }
 }
 </script>
@@ -100,6 +29,12 @@ export default {
 <style>
 #app {
   text-align: center;
+  width: 100vw;
+  height: 100vh;
+  background-size: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 ul li {
   display: block;
