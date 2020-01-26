@@ -13,7 +13,6 @@ export default {
   methods: {
     async handleICS(event) {
       const file = event.target.files[0]
-      console.log(file)
       const reader = new FileReader()
       reader.onload = async event => {
         let icalData = event.target.result
