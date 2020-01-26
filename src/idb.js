@@ -15,23 +15,15 @@ export default {
       // When creating the db, `onupgradeneeded` is called
       // Then `onsuccess`
       request.onupgradeneeded = e => {
-        console.log('onupgrade')
         let db = e.target.result
         let objectStore = db.createObjectStore('vevents', {
           autoIncrement: true,
           keyPath: 'id'
         })
         objectStore.createIndex('course', 'course')
-        console.log(db, objectStore)
       }
-      request.onerror = e => {
-        console.log('Reject!!')
-        reject(new Error('Reject!!'))
-      }
-      request.onsuccess = e => {
-        resolve(e.target.result)
-        console.log('success!')
-      }
+      request.onerror = e => reject(new Error('Reject!!'))
+      request.onsuccess = e => resolve(e.target.result)
     })
   },
   async getVevents() {
