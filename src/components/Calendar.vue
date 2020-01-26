@@ -1,5 +1,5 @@
 <template>
-  <div class="cal-all">
+  <div class="cal-all" @touchstart="touchStart" @touchend="touchEnd">
     <div class="cal-head">
       <div class="date" v-for="fdate of formatDates" :key="fdate">{{fdate}}</div>
     </div>
@@ -46,6 +46,12 @@
 import Vue from 'vue'
 import idb from '../idb.js'
 
+const translatePos = e => {
+  if (e.touches) e = e.changedTouches[0]
+  return { x: e.clientX, y: e.clientY }
+}
+let firstX, firstY
+
 export default {
   name: 'Calendar',
   data() {
@@ -58,7 +64,8 @@ export default {
       scroll: 0.2,
       firstDayOfWeek: 1,
       date: new Date(2019, 10, 3),
-      alpha: 0.7
+      alpha: 0.7,
+      touchThreshold: 40
     }
   },
   async created() {
@@ -74,12 +81,32 @@ export default {
       })
     })
   },
+  methods: {
+    touchStart(e) {
+      let result = translatePos(e)
+      firstX = result.x
+      firstY = result.y
+    },
+    touchEnd(e) {
+      if (!firstX || !firstY) return
+      let result = translatePos(e)
+      let spanX = result.x - firstX
+      let spanY = result.y - firstY
+      if (
+        Math.abs(spanX) > this.touchThreshold &&
+        Math.abs(spanX) > Math.abs(spanY)
+      ) {
+        e.preventDefault()
+        if (spanX > 0) this.date = new Date(+this.date - 7 * 86400000)
+        else this.date = new Date(+this.date + 7 * 86400000)
+      }
+    }
+  },
   computed: {
     formatDates() {
       let fdates = []
       for (let i = 0; i < 7; i++) {
         let fdate = new Date(this.startOfWeek.getTime() + i * 86400000)
-        console.log(fdate)
         fdates.push(`${fdate.getMonth() + 1}-${fdate.getDate()}`)
       }
       return fdates
