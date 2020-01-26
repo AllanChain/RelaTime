@@ -1,17 +1,20 @@
 <template>
   <div class="cal-all">
     <div class="cal-head">
-      <div class="date day" v-for="fdate of formatDates" :key="fdate">{{fdate}}</div>
+      <div class="date" v-for="fdate of formatDates" :key="fdate">{{fdate}}</div>
     </div>
     <div ref="container" class="cal-container">
       <div class="calendar" v-if="ready" :style="{
         height: zoom * 90 + 'vh'
       }">
         <div class="time-lines">
+          <div :style="{height: timeHintPadding}"></div>
           <div class="line" v-for="i in 24" :key="i"></div>
         </div>
-        <div class="time-hint day">
-          <div class="time" v-for="i in 24" :key="i">{{i}}</div>
+        <div class="time-hint">
+          <div :style="{height: `calc(${timeHintPadding} - 9px)`}"></div>
+          <!-- <p class="time" v-for="i in 24" :key="i">{{i}}</p> -->
+          <p class="time" v-for="hint in timeHints" :key="hint">{{hint}}</p>
         </div>
         <div
           class="day"
@@ -50,12 +53,12 @@ export default {
       ready: false,
       addDisabled: false,
       vevents: [],
-      owlMode: 0,
+      owlMode: 26600, // a.k.a. startOfDay
       zoom: 2,
       scroll: 0.2,
       firstDayOfWeek: 1,
       date: new Date(2019, 10, 3),
-      alpha: 0.9
+      alpha: 0.7
     }
   },
   async created() {
@@ -80,6 +83,18 @@ export default {
         fdates.push(`${fdate.getMonth() + 1}-${fdate.getDate()}`)
       }
       return fdates
+    },
+    timeHints() {
+      /* Math.floor + 1 != Math.ceil in case of 0 */
+      let nearest = Math.floor(this.owlMode / 3600) + 1
+      let hints = [nearest]
+      for (let i = nearest + 1; i < 24; i++) hints.push(i)
+      for (let i = 0; i < nearest; i++) hints.push(i)
+      return hints
+    },
+    timeHintPadding() {
+      let h = this.owlMode / 3600
+      return ((Math.floor(h) + 1 - h) / 24) * 100 + '%'
     },
     dayOfWeek() {
       return (this.date.getDay() - this.firstDayOfWeek + 7) % 7
@@ -159,49 +174,66 @@ export default {
   text-align: center;
 }
 .cal-head {
-  margin-left: 5.5%;
+  padding-left: 18px;
   border-bottom: 1px solid gray;
 }
 .cal-container {
   overflow-y: scroll;
   width: 100%;
   height: 90vh;
+  /* Hide scrollbar for IE and Edge */
+  -ms-overflow-style: none;
+}
+/* Hide scrollbar for Chrome, Safari and Opera */
+.cal-container::-webkit-scrollbar {
+  display: none;
 }
 .calendar {
   position: relative;
-  width: 100%;
+  padding-left: 18px;
+  /* Time lable will overflow */
+  overflow: hidden;
 }
 .time-lines {
-  box-sizing: border-box;
-  -moz-box-sizing: border-box;
-  -webkit-box-sizing: border-box;
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  padding-left: 5.5%;
 }
 .time-lines .line {
-  box-sizing: border-box;
+  /* box-sizing: border-box;
   -moz-box-sizing: border-box;
-  -webkit-box-sizing: border-box;
-  height: 4.166666666666667%;
-  border-bottom: 1px dashed gray;
+  -webkit-box-sizing: border-box; */
+  height: calc(4.166666666666667% - 1px);
+  margin-left: 18px;
+  border-top: 1px dashed gray;
+}
+.date {
+  position: relative;
+  display: inline-block;
+  width: 14.285714285714286%;
+  height: 100%;
 }
 .day {
   position: relative;
   display: inline-block;
-  width: 13.5%;
+  width: 14.285714285714286%;
   height: 100%;
 }
 .day.active {
   background-color: #ffa07a55;
 }
-.day.time-hint {
-  width: 5.5%;
+.time-hint {
+  width: 18px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
 }
 .time-hint .time {
+  margin: 0;
+  vertical-align: bottom;
   height: 4.166666666666667%;
 }
 .event {
