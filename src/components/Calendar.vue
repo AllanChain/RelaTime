@@ -1,28 +1,38 @@
 <template>
-  <div ref="container" class="cal-container">
-    <div class="calendar" v-if="ready" :style="{
+  <div class="cal-all">
+    <div class="cal-head">
+      <div class="date day" v-for="fdate of formatDates" :key="fdate">{{fdate}}</div>
+    </div>
+    <div ref="container" class="cal-container">
+      <div class="calendar" v-if="ready" :style="{
         height: zoom * 90 + 'vh'
       }">
-      <div
-        class="day"
-        :class="{active: i === dayOfWeek}"
-        v-for="(days, i) in displayList"
-        :key="i"
-      >
-        <div class="date">{{i}}</div>
+        <div class="time-lines">
+          <div class="line" v-for="i in 24" :key="i"></div>
+        </div>
+        <div class="time-hint day">
+          <div class="time" v-for="i in 24" :key="i">{{i}}</div>
+        </div>
         <div
-          class="event"
-          v-for="(display, j) in days"
-          :key="j"
-          :style="{
+          class="day"
+          :class="{active: i === dayOfWeek}"
+          v-for="(days, i) in displayList"
+          :key="i"
+        >
+          <div
+            class="event"
+            v-for="(display, j) in days"
+            :key="j"
+            :style="{
             height: display.height,
             top: display.top,
             'background-color': display.color
             }"
-        >
-          <span class="course">{{display.course}}</span>
-          <span v-if="display.mod" class="mod">{{display.mod}}</span>
-          <span class="location">{{display.location}}</span>
+          >
+            <span class="course">{{display.course}}</span>
+            <span v-if="display.mod" class="mod">{{display.mod}}</span>
+            <span class="location">{{display.location}}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -62,30 +72,25 @@ export default {
     })
   },
   computed: {
+    formatDates() {
+      let fdates = []
+      for (let i = 0; i < 7; i++) {
+        let fdate = new Date(this.startOfWeek.getTime() + i * 86400000)
+        console.log(fdate)
+        fdates.push(`${fdate.getMonth() + 1}-${fdate.getDate()}`)
+      }
+      return fdates
+    },
     dayOfWeek() {
-      let day = this.date.getDay() - this.firstDayOfWeek
-      if (day < 0) day += 7
-      return day
+      return (this.date.getDay() - this.firstDayOfWeek + 7) % 7
     },
     startOfWeek() {
       return new Date(
-        this.date.getFullYear(),
-        this.date.getMonth(),
-        this.date.getDate() - this.dayOfWeek,
-        0,
-        0,
-        this.owlMode
+        this.date.getTime() - this.dayOfWeek * 86400000 + this.owlMode * 1000
       )
     },
     endOfWeek() {
-      return new Date(
-        this.date.getFullYear(),
-        this.date.getMonth(),
-        this.date.getDate() - this.dayOfWeek + 7,
-        0,
-        0,
-        this.owlMode
-      )
+      return new Date(this.startOfWeek.getTime() + 7 * 86400000)
     },
     displayList() {
       let displayList = []
@@ -147,25 +152,57 @@ export default {
 </script>
 
 <style>
-.cal-container {
-  overflow-x: scroll;
-  height: 90vh;
-  width: 95vw;
+.cal-all {
   margin: auto;
-  font-size: 14px;
+  overflow-x: hidden;
+  font-size: 12px;
+  text-align: center;
+}
+.cal-head {
+  margin-left: 5.5%;
+  border-bottom: 1px solid gray;
+}
+.cal-container {
+  overflow-y: scroll;
+  width: 100%;
+  height: 90vh;
 }
 .calendar {
   position: relative;
   width: 100%;
 }
+.time-lines {
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding-left: 5.5%;
+}
+.time-lines .line {
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  height: 4.166666666666667%;
+  border-bottom: 1px dashed gray;
+}
 .day {
   position: relative;
   display: inline-block;
-  width: 14.28%;
+  width: 13.5%;
   height: 100%;
 }
 .day.active {
-  background-color: #ffa07aaa;
+  background-color: #ffa07a55;
+}
+.day.time-hint {
+  width: 5.5%;
+}
+.time-hint .time {
+  height: 4.166666666666667%;
 }
 .event {
   position: absolute;
@@ -176,7 +213,7 @@ export default {
 .event span {
   display: block;
 }
-.location {
-  font-size: 12px;
+.course {
+  font-size: 14px;
 }
 </style>
