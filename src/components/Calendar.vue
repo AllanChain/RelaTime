@@ -3,7 +3,12 @@
     <div class="calendar" v-if="ready" :style="{
         height: zoom * 90 + 'vh'
       }">
-      <div class="day" v-for="(days, i) in displayList" :key="i">
+      <div
+        class="day"
+        :class="{active: i === dayOfWeek}"
+        v-for="(days, i) in displayList"
+        :key="i"
+      >
         <div class="date">{{i}}</div>
         <div
           class="event"
@@ -39,7 +44,7 @@ export default {
       zoom: 2,
       scroll: 0.2,
       firstDayOfWeek: 1,
-      date: new Date(2019, 9, 3),
+      date: new Date(2019, 10, 3),
       alpha: 0.9
     }
   },
@@ -57,11 +62,16 @@ export default {
     })
   },
   computed: {
+    dayOfWeek() {
+      let day = this.date.getDay() - this.firstDayOfWeek
+      if (day < 0) day += 7
+      return day
+    },
     startOfWeek() {
       return new Date(
         this.date.getFullYear(),
         this.date.getMonth(),
-        this.date.getDate() - this.date.getDay() + this.firstDayOfWeek,
+        this.date.getDate() - this.dayOfWeek,
         0,
         0,
         this.owlMode
@@ -71,7 +81,7 @@ export default {
       return new Date(
         this.date.getFullYear(),
         this.date.getMonth(),
-        this.date.getDate() - this.date.getDay() + this.firstDayOfWeek + 7,
+        this.date.getDate() - this.dayOfWeek + 7,
         0,
         0,
         this.owlMode
@@ -88,9 +98,9 @@ export default {
         let it = event.iterator()
         while ((result = it.next())) {
           let start = result.toJSDate()
-          // console.log(start)
           if (start > this.endOfWeek) break
           let end = new Date(start.getTime() + duration * 1000)
+          /* In this week */
           if (
             !notSeen([
               start - this.startOfWeek,
@@ -99,6 +109,7 @@ export default {
               end - this.endOfWeek
             ])
           ) {
+            /* Whether to be excluded */
             let exclude = false
             for (let exDate of it.exDates) {
               exDate = exDate.toJSDate()
@@ -112,6 +123,7 @@ export default {
               }
             }
             if (exclude) continue
+
             let timeDelta =
               (start.getTime() - this.startOfWeek.getTime()) / 1000
             let day = Math.floor(timeDelta / 86400)
@@ -151,6 +163,9 @@ export default {
   display: inline-block;
   width: 14.28%;
   height: 100%;
+}
+.day.active {
+  background-color: #ffa07aaa;
 }
 .event {
   position: absolute;
