@@ -1,6 +1,9 @@
 module.exports = {
+  publicPath: process.env.NODE_ENV === 'production'
+    ? '/RelaTime/'
+    : '/',
   pwa: {
-    name: 'WebNav',
+    name: 'RelaTime',
     themeColor: '#4c89fe',
     msTileColor: '#4c89fe',
     manifestOptions: {
@@ -16,7 +19,7 @@ module.exports = {
           handler: 'networkFirst',
           options: {
             networkTimeoutSeconds: 20,
-            cacheName: 'webnav|AC',
+            cacheName: 'RelaTime',
             cacheableResponse: {
               statuses: [0, 200]
             }
