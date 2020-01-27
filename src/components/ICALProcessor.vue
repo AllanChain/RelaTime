@@ -1,6 +1,11 @@
 <template>
-  <!-- v-model does not work for files -->
-  <input type="file" @change="handleICS" />
+  <div>
+    <v-btn @click.stop="doUpload" icon text small>
+      <v-icon>mdi-upload</v-icon>
+    </v-btn>
+    <!-- v-model does not work for files -->
+    <input type="file" ref="file" @change="handleICS" hidden />
+  </div>
 </template>
 
 <script>
@@ -11,6 +16,9 @@ import utils from '../utils.js'
 export default {
   name: 'ICALProcessor',
   methods: {
+    doUpload() {
+      this.$refs.file.click()
+    },
     async handleICS(event) {
       const file = event.target.files[0]
       const reader = new FileReader()

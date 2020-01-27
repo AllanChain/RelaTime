@@ -1,7 +1,5 @@
 module.exports = {
-  publicPath: process.env.NODE_ENV === 'production'
-    ? '/RelaTime/'
-    : '/',
+  publicPath: process.env.NODE_ENV === 'production' ? '/RelaTime/' : '/',
   pwa: {
     name: 'RelaTime',
     themeColor: '#4c89fe',
@@ -27,5 +25,6 @@ module.exports = {
         }
       ]
     }
-  }
+  },
+  transpileDependencies: ['vuetify']
 }

@@ -207,7 +207,7 @@ export default {
 .cal-container {
   overflow-y: scroll;
   width: 100%;
-  height: 90vh;
+  height: calc(100vh - 67px);
   /* Hide scrollbar for IE and Edge */
   -ms-overflow-style: none;
 }
@@ -229,10 +229,8 @@ export default {
   height: 100%;
 }
 .time-lines .line {
-  /* box-sizing: border-box;
-  -moz-box-sizing: border-box;
-  -webkit-box-sizing: border-box; */
-  height: calc(4.166666666666667% - 1px);
+  /* seems vuetify introduces border-box; */
+  height: 4.166666666666667%;
   margin-left: 18px;
   border-top: 1px dashed gray;
 }
