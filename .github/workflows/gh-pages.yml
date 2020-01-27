@@ -17,6 +17,8 @@ jobs:
       with:
         node-version: ${{ env.NODE_VERSION }}
     - name: npm install and build
+      env:
+        PUB_PATH: '/RelaTime/'
       run: |
         npm install
         npm run build
