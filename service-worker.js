@@ -14,10 +14,10 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/4.3.1/workbox-sw.js");
 
 importScripts(
-  "/RelaTime/precache-manifest.5d1964aefd06bee7c8395c7103f01f0e.js"
+  "/RelaTime/precache-manifest.be3fd7b3de8803558cb2f07618e94aa1.js"
 );
 
-workbox.core.setCacheNameDetails({prefix: "todo"});
+workbox.core.setCacheNameDetails({prefix: "relatime"});
 
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
