@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "core-js": "^3.4.4",
+    "hammerjs": "^2.0.8",
     "ical.js": "^1.3.0",
     "material-design-icons-iconfont": "^5.0.1",
     "register-service-worker": "^1.6.2",

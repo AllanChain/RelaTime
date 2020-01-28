@@ -44,13 +44,14 @@
 
 <script>
 import Vue from 'vue'
+import Hammer from 'hammerjs'
 import idb from '../idb.js'
 
-const translatePos = e => {
-  if (e.touches) e = e.changedTouches[0]
-  return { x: e.clientX, y: e.clientY }
-}
-let firstX, firstY
+// let firstX, firstY, firstD, originZoom
+// let swiping = false
+// let scaling = false
+// let mc
+let originZoom, hammer
 
 export default {
   name: 'Calendar',
@@ -81,26 +82,72 @@ export default {
       })
     })
   },
+  mounted() {
+    hammer = new Hammer.Manager(this.$refs.container)
+    hammer.add(new Hammer.Swipe({ direction: Hammer.DIRECTION_HORIZONTAL }))
+    hammer.add(new Hammer.Pinch({ enable: false }))
+    hammer.on('pinchstart', this.pinchStart)
+    hammer.on('pinchmove', this.pinchMove)
+    hammer.on('swipeleft', () => {
+      this.date = new Date(+this.date + 7 * 86400000)
+    })
+    hammer.on('swiperight', () => {
+      this.date = new Date(+this.date - 7 * 86400000)
+    })
+  },
   methods: {
-    touchStart(e) {
-      let result = translatePos(e)
-      firstX = result.x
-      firstY = result.y
+    pinchStart(e) {
+      originZoom = this.zoom
     },
-    touchEnd(e) {
-      if (!firstX || !firstY) return
-      let result = translatePos(e)
-      let spanX = result.x - firstX
-      let spanY = result.y - firstY
-      if (
-        Math.abs(spanX) > this.touchThreshold &&
-        Math.abs(spanX) > Math.abs(spanY)
-      ) {
-        e.preventDefault()
-        if (spanX > 0) this.date = new Date(+this.date - 7 * 86400000)
-        else this.date = new Date(+this.date + 7 * 86400000)
+    pinchMove(e) {
+      this.zoom = originZoom * e.scale
+    },
+    touchStart(e) {
+      if (e.touches.length > 1) {
+        hammer.get('pinch').set({ enable: true })
       }
+    },
+    //   // https://stackoverflow.com/a/9335517/8810271
+    //   firstX = e.touches[0].pageX
+    //   firstY = e.touches[0].pageY
+    //   if (e.touches.length === 1) swiping = true
+    //   else if (e.touches.length === 2) {
+    //     scaling = true
+    //     swiping = false
+    //     firstD = Math.hypot(
+    //       firstX - e.touches[1].pageX,
+    //       firstY - e.touches[1].pageY
+    //     )
+    //     originZoom = this.zoom
+    //   }
+    // },
+    // touchMove(e) {
+    //   if (scaling) {
+    //     e.preventDefault()
+    //     let lastD = Math.hypot(
+    //       e.touches[0].pageX - e.touches[1].pageX,
+    //       e.touches[0].pageY - e.touches[1].pageY
+    //     )
+    //     this.zoom = (originZoom * lastD) / firstD
+    //   }
+    // },
+    touchEnd(e) {
+      hammer.get('pinch').set({ enable: false })
     }
+    //   scaling = false
+    //   if (!swiping) return
+    //   let spanX = e.changedTouches[0].pageX - firstX
+    //   let spanY = e.changedTouches[0].pageY - firstY
+    //   if (
+    //     Math.abs(spanX) > this.touchThreshold &&
+    //     Math.abs(spanX) > Math.abs(spanY)
+    //   ) {
+    //     e.preventDefault()
+    //     if (spanX > 0) this.date = new Date(+this.date - 7 * 86400000)
+    //     else this.date = new Date(+this.date + 7 * 86400000)
+    //   }
+    //   swiping = false
+    // }
   },
   computed: {
     formatDates() {
