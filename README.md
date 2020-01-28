@@ -8,13 +8,15 @@ RelaTime = Relativity Time
 ## 项目状态
 丑陋的习作状态，不保证能做下去。
 
+需要先打开 PKU Helper 生成的 ics 文件才能看效果。
+
 至少可以离线了。
 
 ## TODO
 - [ ] 支持修改、添加事件
 - [ ] 增加考试、PRE、大作业等
 - [ ] 支持导出 ICS
-- [ ] 加上 Vuetify UI
+- [X] 加上 Vuetify UI
 ## Project setup
 ```
 npm install
