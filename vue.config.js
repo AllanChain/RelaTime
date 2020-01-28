@@ -7,6 +7,17 @@ module.exports = {
     manifestOptions: {
       start_url: '.',
       background_color: '#4c89fe'
+    },
+    workboxOptions: {
+      runtimeCaching: [{
+        urlPattern: /./,
+        handler: 'StaleWhileRevalidate',
+        options: {
+          cacheableResponse: {
+            statuses: [0, 200]
+          }
+        }
+      }]
     }
   },
   transpileDependencies: ['vuetify']
