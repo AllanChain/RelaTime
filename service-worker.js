@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/4.3.1/workbox-sw.js");
 
 importScripts(
-  "/RelaTime/precache-manifest.be3fd7b3de8803558cb2f07618e94aa1.js"
+  "/RelaTime/precache-manifest.d28205e599fb37bcaff44ff24bf6a323.js"
 );
 
 workbox.core.setCacheNameDetails({prefix: "relatime"});
@@ -32,3 +32,5 @@ self.addEventListener('message', (event) => {
  */
 self.__precacheManifest = [].concat(self.__precacheManifest || []);
 workbox.precaching.precacheAndRoute(self.__precacheManifest, {});
+
+workbox.routing.registerRoute(/./, new workbox.strategies.StaleWhileRevalidate({ plugins: [new workbox.cacheableResponse.Plugin({ statuses: [ 0, 200 ] })] }), 'GET');
