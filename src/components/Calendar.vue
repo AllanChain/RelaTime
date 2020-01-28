@@ -13,7 +13,6 @@
         </div>
         <div class="time-hint">
           <div :style="{height: `calc(${timeHintPadding} - 9px)`}"></div>
-          <!-- <p class="time" v-for="i in 24" :key="i">{{i}}</p> -->
           <p class="time" v-for="hint in timeHints" :key="hint">{{hint}}</p>
         </div>
         <div
@@ -47,10 +46,6 @@ import Vue from 'vue'
 import Hammer from 'hammerjs'
 import idb from '../idb.js'
 
-// let firstX, firstY, firstD, originZoom
-// let swiping = false
-// let scaling = false
-// let mc
 let originZoom, hammer
 
 export default {
@@ -107,47 +102,9 @@ export default {
         hammer.get('pinch').set({ enable: true })
       }
     },
-    //   // https://stackoverflow.com/a/9335517/8810271
-    //   firstX = e.touches[0].pageX
-    //   firstY = e.touches[0].pageY
-    //   if (e.touches.length === 1) swiping = true
-    //   else if (e.touches.length === 2) {
-    //     scaling = true
-    //     swiping = false
-    //     firstD = Math.hypot(
-    //       firstX - e.touches[1].pageX,
-    //       firstY - e.touches[1].pageY
-    //     )
-    //     originZoom = this.zoom
-    //   }
-    // },
-    // touchMove(e) {
-    //   if (scaling) {
-    //     e.preventDefault()
-    //     let lastD = Math.hypot(
-    //       e.touches[0].pageX - e.touches[1].pageX,
-    //       e.touches[0].pageY - e.touches[1].pageY
-    //     )
-    //     this.zoom = (originZoom * lastD) / firstD
-    //   }
-    // },
     touchEnd(e) {
       hammer.get('pinch').set({ enable: false })
     }
-    //   scaling = false
-    //   if (!swiping) return
-    //   let spanX = e.changedTouches[0].pageX - firstX
-    //   let spanY = e.changedTouches[0].pageY - firstY
-    //   if (
-    //     Math.abs(spanX) > this.touchThreshold &&
-    //     Math.abs(spanX) > Math.abs(spanY)
-    //   ) {
-    //     e.preventDefault()
-    //     if (spanX > 0) this.date = new Date(+this.date - 7 * 86400000)
-    //     else this.date = new Date(+this.date + 7 * 86400000)
-    //   }
-    //   swiping = false
-    // }
   },
   computed: {
     formatDates() {
