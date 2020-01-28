@@ -24,11 +24,12 @@
           <div
             class="event"
             v-for="(display, j) in days"
+            @click="editingID = display.id"
             :key="j"
             :style="{
-            height: display.height,
-            top: display.top,
-            'background-color': display.color
+              height: display.height,
+              top: display.top,
+              'background-color': display.color
             }"
           >
             <span class="course">{{display.course}}</span>
@@ -38,6 +39,7 @@
         </div>
       </div>
     </div>
+    <EventDialog :id="editingID" @finish="editingID = null" />
   </div>
 </template>
 
@@ -45,11 +47,15 @@
 import Vue from 'vue'
 import Hammer from 'hammerjs'
 import idb from '../idb.js'
+import EventDialog from './EventDialog'
 
 let originZoom, hammer
 
 export default {
   name: 'Calendar',
+  components: {
+    EventDialog
+  },
   data() {
     return {
       ready: false,
@@ -61,6 +67,7 @@ export default {
       firstDayOfWeek: 1,
       date: new Date(2019, 10, 3),
       alpha: 0.7,
+      editingID: null,
       touchThreshold: 40
     }
   },
@@ -91,6 +98,9 @@ export default {
     })
   },
   methods: {
+    async update() {
+      this.vevents = await idb.getVevents()
+    },
     pinchStart(e) {
       originZoom = this.zoom
     },
@@ -186,7 +196,8 @@ export default {
               location: vevent.event.location,
               description: vevent.event.description,
               top: (timeDelta % 86400) / 864 + '%',
-              height: duration / 864 + '%'
+              height: duration / 864 + '%',
+              id: vevent.id
             })
           }
         }

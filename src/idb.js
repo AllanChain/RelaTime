@@ -9,6 +9,12 @@ export default {
   async init() {
     if (!this.db) this.db = await this.getDB()
   },
+  translateEvent(vevent) {
+    vevent.event = new ICAL.Event(
+      new ICAL.Component(JSON.parse(vevent.event))
+    )
+    return vevent
+  },
   async getDB() {
     return new Promise((resolve, reject) => {
       let request = window.indexedDB.open(DB_NAME, DB_VER)
@@ -34,14 +40,19 @@ export default {
       store.openCursor().onsuccess = e => {
         let cursor = e.target.result
         if (cursor) {
-          let vevent = cursor.value
-          vevent.event = new ICAL.Event(
-            new ICAL.Component(JSON.parse(vevent.event)))
+          let vevent = this.translateEvent(cursor.value)
           vevents.push(vevent)
           cursor.continue()
         }
       }
       trans.oncomplete = e => resolve(vevents)
+    })
+  },
+  async getVeventByID(id) {
+    return new Promise(resolve => {
+      let trans = this.db.transaction(['vevents'], 'readonly')
+      let request = trans.objectStore('vevents').get(id)
+      request.onsuccess = () => resolve(this.translateEvent(request.result))
     })
   },
   async addVeventToDB(vevent) {

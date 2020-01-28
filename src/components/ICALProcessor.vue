@@ -4,7 +4,7 @@
       <v-icon>mdi-upload</v-icon>
     </v-btn>
     <!-- v-model does not work for files -->
-    <input type="file" ref="file" @change="handleICS" hidden />
+    <input type="file" accept=".ics" ref="file" @change="handleICS" hidden />
   </div>
 </template>
 
@@ -28,6 +28,7 @@ export default {
         let icalObj = new ICAL.Component(parsed)
         let events = icalObj.getAllSubcomponents('vevent')
         let colorMap = {}
+        let promises = []
         for (let vevent of events) {
           let event = new ICAL.Event(vevent)
           /* 课程及模块 */
@@ -39,7 +40,7 @@ export default {
             mod = courseMatch[2]
           }
           if (!(course in colorMap)) colorMap[course] = utils.randColor()
-          await idb.addVeventToDB({
+          promises.push(idb.addVeventToDB({
             /* Stringifying event will cause error
              * And store Event for future ics export
              */
@@ -47,8 +48,10 @@ export default {
             course: course,
             mod: mod,
             color: colorMap[course]
-          })
+          }))
         }
+        Promise.all(promises)
+        this.$emit('update')
       }
       reader.readAsText(file)
     }
