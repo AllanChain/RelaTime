@@ -1,6 +1,6 @@
-import ICAL from 'ical.js'
+// import ICAL from 'ical.js'
 
-const DB_NAME = 'veventdb'
+const DB_NAME = 'eventdb'
 const DB_VER = 1
 
 export default {
@@ -9,12 +9,6 @@ export default {
   async init() {
     if (!this.db) this.db = await this.getDB()
   },
-  translateEvent(vevent) {
-    vevent.event = new ICAL.Event(
-      new ICAL.Component(JSON.parse(vevent.event))
-    )
-    return vevent
-  },
   async getDB() {
     return new Promise((resolve, reject) => {
       let request = window.indexedDB.open(DB_NAME, DB_VER)
@@ -22,55 +16,63 @@ export default {
       // Then `onsuccess`
       request.onupgradeneeded = e => {
         let db = e.target.result
-        let objectStore = db.createObjectStore('vevents', {
+        let objectStore = db.createObjectStore('events', {
           autoIncrement: true,
           keyPath: 'id'
         })
-        objectStore.createIndex('course', 'course')
+        objectStore.createIndex('course', 'description.course')
       }
       request.onerror = e => reject(new Error('Reject!!'))
       request.onsuccess = e => resolve(e.target.result)
     })
   },
-  async getVevents() {
+  async getEvents() {
     return new Promise((resolve, reject) => {
-      let trans = this.db.transaction(['vevents'], 'readonly')
-      let store = trans.objectStore('vevents')
-      let vevents = []
-      store.openCursor().onsuccess = e => {
-        let cursor = e.target.result
-        if (cursor) {
-          let vevent = this.translateEvent(cursor.value)
-          vevents.push(vevent)
-          cursor.continue()
-        }
-      }
-      trans.oncomplete = e => resolve(vevents)
+      let trans = this.db.transaction(['events'], 'readonly')
+      let request = trans.objectStore('events').getAll()
+      request.onsuccess = () => resolve(request.result)
     })
   },
-  async getVeventByID(id) {
+  async getEventByID(id) {
     return new Promise(resolve => {
-      let trans = this.db.transaction(['vevents'], 'readonly')
-      let request = trans.objectStore('vevents').get(id)
-      request.onsuccess = () => resolve(this.translateEvent(request.result))
+      let trans = this.db.transaction(['events'], 'readonly')
+      let request = trans.objectStore('events').get(id)
+      request.onsuccess = () => resolve(request.result)
     })
   },
-  async addVeventToDB(vevent) {
-    return new Promise((resolve, reject) => {
-      let trans = this.db.transaction(['vevents'], 'readwrite')
-      trans.oncomplete = e => resolve()
-      trans.objectStore('vevents').add(vevent)
+  async getCourseByName(name) {
+    return new Promise(resolve => {
+      let trans = this.db.transaction(['events'], 'readonly')
+      let request = trans
+        .objectStore('events')
+        .index('course')
+        .getAll(IDBKeyRange.only(name))
+      request.onsuccess = () => resolve(request.result)
     })
   },
-  async deleteVevent(id) {
-    await this.deleteVeventFromDB(id)
-    this.vevents = await this.getVevents()
+  async updateEvent(event) {
+    return new Promise(resolve => {
+      let trans = this.db.transaction(['events'], 'readwrite')
+      trans.oncomplete = resolve
+      trans.objectStore('events').put(event)
+    })
   },
-  async deleteVeventFromDB(id) {
+  async addEventToDB(event) {
+    return new Promise(resolve => {
+      let trans = this.db.transaction(['events'], 'readwrite')
+      trans.oncomplete = resolve
+      trans.objectStore('events').add(event)
+    })
+  },
+  async deleteEvent(id) {
+    await this.deleteEventFromDB(id)
+    this.events = await this.getEvents()
+  },
+  async deleteEventFromDB(id) {
     return new Promise((resolve, reject) => {
-      let trans = this.db.transaction(['vevents'], 'readwrite')
+      let trans = this.db.transaction(['events'], 'readwrite')
       trans.oncomplete = e => resolve()
-      trans.objectStore('vevents').delete(id)
+      trans.objectStore('events').delete(id)
     })
   }
 }

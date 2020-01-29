@@ -30,25 +30,12 @@ export default {
         let colorMap = {}
         let promises = []
         for (let vevent of events) {
-          let event = new ICAL.Event(vevent)
-          /* 课程及模块 */
-          let course = event.summary
-          let mod = ''
-          let courseMatch = course.match(/^(.*?)(习题|上机)课*?$/)
-          if (courseMatch) {
-            course = courseMatch[1]
-            mod = courseMatch[2]
+          let event = utils.compToEvent(vevent)
+          if (!(event.description.course in colorMap)) {
+            colorMap[event.description.course] = utils.randColor()
           }
-          if (!(course in colorMap)) colorMap[course] = utils.randColor()
-          promises.push(idb.addVeventToDB({
-            /* Stringifying event will cause error
-             * And store Event for future ics export
-             */
-            event: JSON.stringify(vevent),
-            course: course,
-            mod: mod,
-            color: colorMap[course]
-          }))
+          event.description.color = colorMap[event.description.course]
+          promises.push(idb.addEventToDB(event))
         }
         Promise.all(promises)
         this.$emit('update')

@@ -17,14 +17,14 @@
         </div>
         <div
           class="day"
-          :class="{active: i === dayOfWeek}"
+          :class="{active: i === dayOfWeek && deltaDay === 0 }"
           v-for="(days, i) in displayList"
           :key="i"
         >
           <div
             class="event"
             v-for="(display, j) in days"
-            @click="editingID = display.id"
+            @click="editingID = { id: display.id, start: display.start }"
             :key="j"
             :style="{
               height: display.height,
@@ -39,7 +39,7 @@
         </div>
       </div>
     </div>
-    <EventDialog :id="editingID" @finish="editingID = null" />
+    <EventDialog :id="editingID" @finish="dialogFinish" />
   </div>
 </template>
 
@@ -47,6 +47,7 @@
 import Vue from 'vue'
 import Hammer from 'hammerjs'
 import idb from '../idb.js'
+import utils from '../utils'
 import EventDialog from './EventDialog'
 
 let originZoom, hammer
@@ -60,11 +61,12 @@ export default {
     return {
       ready: false,
       addDisabled: false,
-      vevents: [],
+      events: [],
       owlMode: 26600, // a.k.a. startOfDay
       zoom: 2,
       scroll: 0.2,
       firstDayOfWeek: 1,
+      deltaDay: 0, // change when swipe
       date: new Date(2019, 10, 3),
       alpha: 0.7,
       editingID: null,
@@ -73,8 +75,8 @@ export default {
   },
   async created() {
     await idb.init()
-    idb.getVevents().then(data => {
-      this.vevents = data
+    idb.getEvents().then(data => {
+      this.events = data
       this.ready = true
       Vue.nextTick(() => {
         const container = this.$refs.container
@@ -91,15 +93,19 @@ export default {
     hammer.on('pinchstart', this.pinchStart)
     hammer.on('pinchmove', this.pinchMove)
     hammer.on('swipeleft', () => {
-      this.date = new Date(+this.date + 7 * 86400000)
+      this.deltaDay += 7
     })
     hammer.on('swiperight', () => {
-      this.date = new Date(+this.date - 7 * 86400000)
+      this.deltaDay -= 7
     })
   },
   methods: {
     async update() {
-      this.vevents = await idb.getVevents()
+      this.events = await idb.getEvents()
+    },
+    dialogFinish(update) {
+      this.editingID = null
+      if (update) this.update()
     },
     pinchStart(e) {
       originZoom = this.zoom
@@ -142,7 +148,9 @@ export default {
     },
     startOfWeek() {
       return new Date(
-        this.date.getTime() - this.dayOfWeek * 86400000 + this.owlMode * 1000
+        this.date.getTime() +
+          (this.deltaDay - this.dayOfWeek) * 86400000 +
+          this.owlMode * 1000
       )
     },
     endOfWeek() {
@@ -152,15 +160,10 @@ export default {
       let displayList = []
       for (let i = 0; i < 7; i++) displayList.push([])
       const notSeen = arr => arr.every(x => x >= 0) || arr.every(x => x <= 0)
-      let result
-      for (let vevent of this.vevents) {
-        let event = vevent.event
-        let duration = event.duration.toSeconds()
-        let it = event.iterator()
-        while ((result = it.next())) {
-          let start = result.toJSDate()
+      for (let event of this.events) {
+        for (let start of utils.getIterator(event)) {
           if (start > this.endOfWeek) break
-          let end = new Date(start.getTime() + duration * 1000)
+          let end = new Date(start.getTime() + event.duration * 1000)
           /* In this week */
           if (
             !notSeen([
@@ -172,8 +175,7 @@ export default {
           ) {
             /* Whether to be excluded */
             let exclude = false
-            for (let exDate of it.exDates) {
-              exDate = exDate.toJSDate()
+            for (let exDate of event.exdate) {
               if (
                 exDate.getFullYear() === start.getFullYear() &&
                 exDate.getMonth() === start.getMonth() &&
@@ -184,20 +186,19 @@ export default {
               }
             }
             if (exclude) continue
-
             let timeDelta =
               (start.getTime() - this.startOfWeek.getTime()) / 1000
             let day = Math.floor(timeDelta / 86400)
-            let c = vevent.color
+            let c = event.description.color
             displayList[day].push({
-              course: vevent.course,
-              mod: vevent.mod,
+              course: event.description.course,
+              mod: event.description.mod,
               color: `hsla(${c.h}, ${c.s}%, ${c.l}%, ${this.alpha})`,
-              location: vevent.event.location,
-              description: vevent.event.description,
+              location: event.location,
               top: (timeDelta % 86400) / 864 + '%',
-              height: duration / 864 + '%',
-              id: vevent.id
+              height: event.duration / 864 + '%',
+              id: event.id,
+              start: start
             })
           }
         }

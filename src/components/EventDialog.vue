@@ -1,84 +1,125 @@
 <template>
-  <v-dialog v-if="vevent != null" :value="vevent != null" @input="finish" max-width="290">
+  <v-dialog v-if="events != null" :value="events != null" @input="finish">
     <v-card class="elevation-12">
       <v-toolbar color="primary" dark flat>
-        <v-toolbar-title>Modify Event</v-toolbar-title>
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on }">
+            <v-btn icon large v-on="on" @click="done">
+              <v-icon color="green lighten-2">check</v-icon>
+            </v-btn>
+          </template>
+          <span>Done</span>
+        </v-tooltip>
+        <v-toolbar-title>{{singleEvent.description.course}}</v-toolbar-title>
         <v-spacer />
         <v-tooltip bottom>
           <template v-slot:activator="{ on }">
-            <v-btn icon large v-on="on">
-              <v-icon>delete</v-icon>
+            <v-btn icon large v-on="on" @click="deleteThis">
+              <v-icon color="red lighten-2">delete</v-icon>
             </v-btn>
           </template>
-          <span>Delete</span>
+          <span>Delete This</span>
         </v-tooltip>
         <v-tooltip bottom>
           <template v-slot:activator="{ on }">
-            <v-btn icon large v-on="on">
-              <v-icon>cancel</v-icon>
+            <v-btn icon large v-on="on" @click="finish({ update: false })">
+              <v-icon color="yellow lighten-2">cancel</v-icon>
             </v-btn>
           </template>
           <span>Cancel</span>
         </v-tooltip>
       </v-toolbar>
       <v-card-text class="pa-1">
-        <v-container>
-          <v-row>
-            <v-col cols="6">
-              <v-text-field
-                label="Course"
-                prepend-inner-icon="school"
-                type="text"
-                v-model="vevent.course"
-              />
-            </v-col>
-            <v-col cols="6">
-              <v-text-field
-                label="Module"
-                prepend-inner-icon="extension"
-                type="text"
-                v-model="vevent.mod"
-              />
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col cols="6">
-              <v-text-field
-                label="Location"
-                prepend-inner-icon="place"
-                type="text"
-                v-model="vevent.event.location"
-              />
-            </v-col>
-            <v-col cols="6">
-              <v-text-field
-                label="Description"
-                prepend-inner-icon="description"
-                type="text"
-                v-model="vevent.event.description"
-              />
-            </v-col>
-          </v-row>
-          <v-row v-for="(time, i) of times" :key="i">
-            <v-col cols="12">
-              <v-icon>access_time</v-icon>
-              <v-menu
-                v-for="(atime, j) of time"
-                :key="j"
-                v-model="atime.editing"
-                :close-on-content-click="false"
-                width="290px"
-                min-width="290px"
-              >
-                <template v-slot:activator="{ on }">
-                  <v-btn text small v-on="on">{{atime.time}}</v-btn>
-                </template>
-                <v-time-picker v-if="atime.editing" v-model="atime.time" full-width format="24hr"></v-time-picker>
-                <!-- @click:minute="null" -->
-              </v-menu>
-            </v-col>
-          </v-row>
-        </v-container>
+        <v-tabs v-model="tab">
+          <v-tabs-slider />
+          <v-tab v-for="($, mod) in events" :key="'-'+mod" :href="'#' + mod">{{mod}}</v-tab>
+          <v-tab-item v-for="(event, mod) in events" :key="mod" :value="mod">
+            <!-- <v-tab v-model="tab" v-for="i in 2" :key="i" :href="'#tab-'+i">{{i}}</v-tab>
+            <v-tab-item v-for="i in 2" :key="i" :value="'tab-' + i">-->
+            <v-container>
+              <v-row dense>
+                <v-col cols="6" sm="4" dense>
+                  <v-text-field
+                    outlined
+                    dense
+                    label="Course"
+                    prepend-inner-icon="school"
+                    type="text"
+                    v-model="event.description.course"
+                  />
+                </v-col>
+                <v-col cols="6" sm="4" dense>
+                  <v-text-field
+                    outlined
+                    dense
+                    label="Module"
+                    prepend-inner-icon="extension"
+                    type="text"
+                    v-model="event.description.mod"
+                  />
+                </v-col>
+                <v-col cols="6" sm="4" dense>
+                  <v-text-field
+                    outlined
+                    dense
+                    label="class"
+                    prepend-inner-icon="description"
+                    type="text"
+                    v-model="event.description.class"
+                  />
+                </v-col>
+                <v-col cols="6" sm="4" dense>
+                  <v-text-field
+                    outlined
+                    dense
+                    label="Location"
+                    prepend-inner-icon="place"
+                    type="text"
+                    v-model="event.location"
+                  />
+                </v-col>
+              </v-row>
+              <v-row v-for="(time, i) of event.timeData" :key="i" dense>
+                <v-col cols="4" dense>
+                  <!-- <v-menu v-model="time.days.editing" :close-on-content-click="false">
+                    <template v-slot:activator="{ on }">
+                      <v-btn text small dense v-on="on">{{time.days.days}}</v-btn>
+                  </template>-->
+                  <v-select
+                    v-model="time.days.days[0]"
+                    :items="['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU']"
+                    label="Day"
+                    outlined
+                    dense
+                  ></v-select>
+                  <!-- </v-menu> -->
+                </v-col>
+                <v-col v-for="(atime, j) of time.time" :key="j" cols="4" dense>
+                  <v-menu
+                    v-model="atime.editing"
+                    :close-on-content-click="false"
+                    width="290px"
+                    min-width="290px"
+                  >
+                    <template v-slot:activator="{ on }">
+                      <v-btn text small dense v-on="on">
+                        <v-icon class="mr-1">access_time</v-icon>
+                        {{atime.time}}
+                      </v-btn>
+                    </template>
+                    <v-time-picker
+                      v-if="atime.editing"
+                      v-model="atime.time"
+                      full-width
+                      format="24hr"
+                      @click:minute="atime.editing = false"
+                    ></v-time-picker>
+                  </v-menu>
+                </v-col>
+              </v-row>
+            </v-container>
+          </v-tab-item>
+        </v-tabs>
       </v-card-text>
     </v-card>
   </v-dialog>
@@ -86,6 +127,8 @@
 
 <script>
 import idb from '../idb'
+import ICAL from 'ical.js'
+
 const formatTime = time => {
   let h = time.getHours()
   if (h < 10) h = '0' + h
@@ -93,37 +136,77 @@ const formatTime = time => {
   if (m < 10) m = '0' + m
   return h + ':' + m
 }
+
 export default {
   name: 'EventDialog',
   props: ['id'],
   data() {
     return {
-      vevent: null,
-      times: []
+      singleEvent: null,
+      events: null,
+      mode: 'all',
+      tab: 1
     }
   },
   watch: {
     async id(id) {
       if (id) {
-        this.times = []
-        this.vevent = await idb.getVeventByID(id)
-        this.times.push([
-          {
-            time: formatTime(this.vevent.event.startDate.toJSDate()),
-            editing: false
-          },
-          {
-            time: formatTime(this.vevent.event.endDate.toJSDate()),
-            editing: false
+        let thisEvents = {}
+        let thisEvent = await idb.getEventByID(id.id)
+        this.singleEvent = thisEvent
+        this.tab = thisEvent.description.mod || thisEvent.description.course
+        let events = await idb.getCourseByName(thisEvent.description.course)
+        for (let event of events) {
+          let timeData = {
+            time: [
+              {
+                time: formatTime(event.dtstart),
+                editing: false
+              },
+              {
+                time: formatTime(event.dtend),
+                editing: false
+              }
+            ],
+            days: {
+              days: event.rrule.BYDAY,
+              editing: false
+            }
           }
-        ])
-      } else this.vevent = null
+          let mod = event.description.mod || event.description.course
+          if (thisEvents[mod]) {
+            thisEvents[mod].timeData.push(timeData)
+          } else {
+            event.timeData = [timeData]
+            thisEvents[mod] = event
+          }
+        }
+        /* Modify data at once so vue will know */
+        this.events = thisEvents
+      } else {
+        this.events = null
+      }
     }
   },
+  // computed: {
+  //   times() {
+  //     if (this.mode == 'single')
+  //   }
+  // },
   methods: {
+    deleteThis() {
+      let property = this.singleEvent.event.component.getFirstProperty('exdate')
+      let exDates = property.getValues()
+      exDates.push(ICAL.Time.fromJSDate(this.id.start))
+      property.setValues(exDates)
+      idb.updateEvent(this.singleEvent)
+      this.finish({ update: true })
+    },
     finish(e) {
-      this.$emit('finish', {})
-    }
+      this.events = null
+      this.$emit('finish', !!e.update)
+    },
+    done() {}
   }
 }
 </script>
