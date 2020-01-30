@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-if="event != null" :value="event != null" @input="finish">
+  <v-dialog v-if="event != null" :value="event != null" @input="finish" max-width="350px">
     <v-card class="elevation-12">
       <v-toolbar color="primary" dark flat>
         <v-tooltip bottom>
@@ -30,91 +30,93 @@
         </v-tooltip>
       </v-toolbar>
       <v-card-text class="pa-1">
-        <v-card dense flat>
-          <v-card-text>
-        <v-container>
-          <v-row dense>
-            <v-col cols="6" sm="4" dense>
+        <v-container class="overflow-y-auto" style="max-height: 400px">
+          <v-row class="pb-1" dense>
+            <v-col cols="8" dense>
               <v-text-field
                 outlined
                 dense
+                hide-details
                 label="Course"
                 prepend-inner-icon="school"
                 type="text"
                 v-model="event.description.course"
               />
             </v-col>
-            <v-col cols="6" sm="4" dense>
+            <v-col cols="4" dense>
               <v-text-field
                 outlined
                 dense
+                hide-details
+                label="Credit"
+                prepend-inner-icon="credit_card"
+                type="number"
+                v-model="event.description.credit"
+              />
+            </v-col>
+            <v-col cols="6" dense>
+              <v-text-field
+                outlined
+                dense
+                hide-details
                 label="Module"
                 prepend-inner-icon="extension"
                 type="text"
                 v-model="event.description.mod"
               />
             </v-col>
-            <v-col cols="6" sm="4" dense>
+            <v-col cols="6" dense>
               <v-text-field
                 outlined
                 dense
+                hide-details
                 label="Class"
                 prepend-inner-icon="class"
-                type="text"
+                type="number"
                 v-model="event.description.class"
               />
             </v-col>
-            <v-col cols="6" sm="4" dense>
+            <v-col cols="6" dense>
               <v-text-field
                 outlined
                 dense
-                label="Credit"
-                prepend-inner-icon="credit_card"
-                type="text"
-                v-model="event.description.credit"
-              />
-            </v-col>
-            <v-col cols="6" sm="4" dense>
-              <v-text-field
-                outlined
-                dense
+                hide-details
                 label="Location"
                 prepend-inner-icon="place"
                 type="text"
                 v-model="event.location"
               />
             </v-col>
-            <v-col cols="12" sm="4" dense>
-              <v-color-picker
-                v-model="event.description.color"
-                class="ma-0"
-                canvas-height="100px"
-                hide-inputs
-                flat
-              ></v-color-picker>
+            <v-col cols="6" dense>
+              <v-text-field
+                outlined
+                dense
+                hide-details
+                label="Duration"
+                prepend-inner-icon="timelapse"
+                type="number"
+                v-model="event.duration"
+              />
             </v-col>
           </v-row>
-          <v-row v-for="(rrule, i) of rrules()" :key="i" dense>
-            <v-col cols="4" dense>
-              <!-- <v-menu v-model="time.days.editing" :close-on-content-click="false">
-                    <template v-slot:activator="{ on }">
-                      <v-btn text small dense v-on="on">{{time.days.days}}</v-btn>
-              </template>-->
+          <v-row v-for="(rrule, i) of rrules()" :key="i" align="start" justify="center" dense>
+            <v-col cols="6" dense>
               <v-select
                 v-model="rrule.days"
                 :items="allDays"
-                label="Day"
+                label="Days"
                 append-icon
+                prepend-inner-icon="calendar_today"
                 outlined
                 multiple
                 dense
+                hide-details
               ></v-select>
-              <!-- </v-menu> -->
             </v-col>
             <v-col cols="4" dense>
               <v-menu :close-on-content-click="false" width="290px" min-width="290px">
                 <template v-slot:activator="{ on }">
-                  <v-btn text small dense v-on="on">
+                  <v-btn text dense v-on="on">
                     <v-icon class="mr-1" small>access_time</v-icon>
                     {{rrule.startTime}}
                   </v-btn>
@@ -123,9 +125,17 @@
               </v-menu>
             </v-col>
           </v-row>
+          <v-row class="pt-1" dense>
+            <v-col cols="12" dense>
+              <v-color-picker
+                v-model="event.description.color"
+                class="ma-0"
+                canvas-height="100px"
+                hide-inputs
+              ></v-color-picker>
+            </v-col>
+          </v-row>
         </v-container>
-          </v-card-text>
-        </v-card>
       </v-card-text>
     </v-card>
   </v-dialog>
@@ -133,7 +143,6 @@
 
 <script>
 import idb from '../idb'
-import ICAL from 'ical.js'
 
 export default {
   name: 'EventDialog',
@@ -147,46 +156,12 @@ export default {
   watch: {
     async id(id) {
       if (id) this.event = await idb.getEventByID(id.id)
-      // this.tab = thisEvent.description.mod || thisEvent.description.course
-      // let events = await idb.getCourseByName(thisEvent.description.course)
-      // for (let event of events) {
-      //   let timeData = {
-      //     time: [
-      //       {
-      //         get time() { return formatTime(event.dtstart) },
-      //         set time(time) { setTime(event.dtstart, time) },
-      //         editing: false
-      //       },
-      //       {
-      //         get time() { return formatTime(event.dtend) },
-      //         set time(time) { setTime(event.dtend, time) },
-      //         editing: false
-      //       }
-      //     ],
-      //     days: {
-      //       days: event.rrule.BYDAY,
-      //       editing: false
-      //     }
-      //   }
-      //   let mod = event.description.mod || event.description.course
-      //   if (thisEvents[mod])
-      //     thisEvents[mod].timeData.push(timeData)
-      //   else {
-      //     event.timeData = [timeData]
-      //     thisEvents[mod] = event
-      //   }
-      // }
-      /* Modify data at once so vue will know */
-      // this.events = thisEvents
       else this.event = null
     }
   },
   methods: {
     deleteThis() {
-      let property = this.event.event.component.getFirstProperty('exdate')
-      let exDates = property.getValues()
-      exDates.push(ICAL.Time.fromJSDate(this.id.start))
-      property.setValues(exDates)
+      this.event.exdate.push(this.id.start)
       idb.updateEvent(this.event)
       this.finish({ update: true })
     },
@@ -198,13 +173,14 @@ export default {
       idb.updateEvent(this.event)
       this.finish({ update: true })
     },
+    addTime() {},
     back1Day(rrule) {
       rrule.BYDAY = rrule.BYDAY.map(day => {
         let index = this.allDays.indexOf(day) || this.allDays.length
         return this.allDays[index - 1]
       })
     },
-    * rrules() {
+    *rrules() {
       for (let rrule of this.event.rrule) {
         yield {
           get days() {
