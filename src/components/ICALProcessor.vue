@@ -28,15 +28,28 @@ export default {
         let icalObj = new ICAL.Component(parsed)
         let events = icalObj.getAllSubcomponents('vevent')
         let colorMap = {}
-        let promises = []
+        let eventMap = {}
         for (let vevent of events) {
           let event = utils.compToEvent(vevent)
-          if (!(event.description.course in colorMap)) {
+          let hash = utils.eventHash(event)
+          if (hash in eventMap) {
+            let targetEvent = eventMap[hash]
+            for (let targetRrule of targetEvent.rrule) {
+              for (let rrule of event.rrule) {
+                if (JSON.stringify(rrule) !== JSON.stringify(targetRrule))
+                  targetEvent.rrule.push(rrule)
+              }
+            }
+          } else eventMap[hash] = event
+          if (!(event.description.course in colorMap))
             colorMap[event.description.course] = utils.randColor()
-          }
+
           event.description.color = colorMap[event.description.course]
-          promises.push(idb.addEventToDB(event))
         }
+        console.log(eventMap)
+        let promises = []
+        for (let hash in eventMap)
+          promises.push(idb.addEventToDB(eventMap[hash]))
         Promise.all(promises)
         this.$emit('update')
       }

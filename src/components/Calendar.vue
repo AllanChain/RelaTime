@@ -1,40 +1,42 @@
 <template>
-  <div class="cal-all" @touchstart="touchStart" @touchend="touchEnd">
-    <div class="cal-head">
-      <div class="date" v-for="fdate of formatDates" :key="fdate">{{fdate}}</div>
-    </div>
-    <div ref="container" class="cal-container">
-      <div class="calendar" v-if="ready" :style="{
+  <div>
+    <div class="cal-all">
+      <div class="cal-head">
+        <div class="date" v-for="fdate of formatDates" :key="fdate">{{fdate}}</div>
+      </div>
+      <div ref="container" class="cal-container" @touchstart="touchStart" @touchend="touchEnd">
+        <div class="calendar" v-if="ready" :style="{
         height: zoom * 90 + 'vh'
       }">
-        <div class="time-lines">
-          <div :style="{height: timeHintPadding}"></div>
-          <div class="line" v-for="i in 24" :key="i"></div>
-        </div>
-        <div class="time-hint">
-          <div :style="{height: `calc(${timeHintPadding} - 9px)`}"></div>
-          <p class="time" v-for="hint in timeHints" :key="hint">{{hint}}</p>
-        </div>
-        <div
-          class="day"
-          :class="{active: i === dayOfWeek && deltaDay === 0 }"
-          v-for="(days, i) in displayList"
-          :key="i"
-        >
+          <div class="time-lines">
+            <div :style="{height: timeHintPadding}"></div>
+            <div class="line" v-for="i in 24" :key="i"></div>
+          </div>
+          <div class="time-hint">
+            <div :style="{height: `calc(${timeHintPadding} - 9px)`}"></div>
+            <p class="time" v-for="hint in timeHints" :key="hint">{{hint}}</p>
+          </div>
           <div
-            class="event"
-            v-for="(display, j) in days"
-            @click="editingID = { id: display.id, start: display.start }"
-            :key="j"
-            :style="{
+            class="day"
+            :class="{active: i === dayOfWeek && deltaDay === 0 }"
+            v-for="(days, i) in displayList"
+            :key="i"
+          >
+            <div
+              class="event"
+              v-for="(display, j) in days"
+              @click="editingID = { id: display.id, start: display.start }"
+              :key="j"
+              :style="{
               height: display.height,
               top: display.top,
               'background-color': display.color
             }"
-          >
-            <span class="course">{{display.course}}</span>
-            <span v-if="display.mod" class="mod">{{display.mod}}</span>
-            <span class="location">{{display.location}}</span>
+            >
+              <span class="course">{{display.course}}</span>
+              <span v-if="display.mod" class="mod">{{display.mod}}</span>
+              <span class="location">{{display.location}}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -114,9 +116,8 @@ export default {
       this.zoom = originZoom * e.scale
     },
     touchStart(e) {
-      if (e.touches.length > 1) {
+      if (e.touches.length > 1)
         hammer.get('pinch').set({ enable: true })
-      }
     },
     touchEnd(e) {
       hammer.get('pinch').set({ enable: false })
@@ -193,7 +194,7 @@ export default {
             displayList[day].push({
               course: event.description.course,
               mod: event.description.mod,
-              color: `hsla(${c.h}, ${c.s}%, ${c.l}%, ${this.alpha})`,
+              color: `hsla(${c.h}, ${c.s * 100}%, ${c.l * 100}%, ${this.alpha})`,
               location: event.location,
               top: (timeDelta % 86400) / 864 + '%',
               height: event.duration / 864 + '%',

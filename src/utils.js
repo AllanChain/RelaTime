@@ -9,32 +9,48 @@ export default {
     this.h = (this.h + 90 + Math.round(20 * Math.random())) % 360
     return {
       h: this.h,
-      s: Math.round(60 + 40 * Math.random()),
-      l: Math.round(40 + 20 * Math.random())
+      s: 0.6 + 0.4 * Math.random(),
+      l: 0.4 + 0.2 * Math.random()
     }
   },
   eventToComp(data) {
     data = JSON.parse(JSON.stringify(data))
     let comp = new ICAL.Component('VEVENT')
-    data.rrule.until = translateDate(data.rrule.until)
-    data.rrule = new ICAL.Recur(data.rrule)
+    data.rrule = data.rrule.map(rrule => {
+      rrule.until = translateDate(rrule.until)
+      return new ICAL.Recur(rrule)
+    })
     data.exdate = data.exdate.map(translateDate)
     data.duration = ICAL.Duration.fromSeconds(data.duration)
     data.description = JSON.stringify(data.description)
     for (let key in data) {
       let val = data[key]
       if (key.startsWith('dt')) val = translateDate(val)
-      try {
-        comp.addPropertyWithValue(key, val || undefined)
-      } catch {
+      if (key === 'exdate')
         comp.addProperty(new ICAL.Property(key)).setValues(val)
-      }
+      else if (key === 'rrule')
+        val.map(rrule => comp.addPropertyWithValue(key, rrule))
+      else comp.addPropertyWithValue(key, val || undefined)
     }
     return comp
   },
   compToEvent(comp) {
     let event = new ICAL.Event(comp)
-    let rrule = comp.getFirstPropertyValue('rrule')
+    let dtstart = event.startDate.toJSDate()
+    let rrules = []
+    for (let rrule of comp.getAllProperties('rrule')) {
+      rrule = rrule.getFirstValue()
+      rrule = {
+        freq: rrule.freq,
+        interval: rrule.interval,
+        until: rrule.until.toJSDate(),
+        ...rrule.parts
+      }
+      rrule.BYHOUR = rrule.BYHOUR || [dtstart.getUTCHours()]
+      rrule.BYMINUTE = rrule.BYMINUTE || [dtstart.getUTCMinutes()]
+      rrule.BYSECOND = rrule.BYSECOND || [dtstart.getUTCSeconds()]
+      rrules.push(rrule)
+    }
     let description
     try {
       description = JSON.parse(event.description)
@@ -53,16 +69,11 @@ export default {
       summary: event.summary,
       description: description,
       uid: event.uid,
-      dtstart: event.startDate.toJSDate(),
+      dtstart: dtstart,
       dtstamp: comp.getFirstPropertyValue('dtstamp').toJSDate(),
       dtend: event.endDate.toJSDate(),
       duration: event.duration.toSeconds(),
-      rrule: {
-        freq: rrule.freq,
-        interval: rrule.interval,
-        until: rrule.until.toJSDate(),
-        ...rrule.parts
-      },
+      rrule: rrules,
       exdate: [
         ...comp
           .getFirstProperty('exdate')
@@ -75,5 +86,13 @@ export default {
     let result
     let it = new ICAL.Event(this.eventToComp(event)).iterator()
     while ((result = it.next())) yield result.toJSDate()
+  },
+  eventHash(event) {
+    return (
+      event.summary +
+      event.location +
+      event.duration +
+      JSON.stringify(event.description)
+    )
   }
 }
