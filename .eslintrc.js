@@ -9,6 +9,7 @@ module.exports = {
   ],
   rules: {
     'space-before-function-paren': 0,
+    'curly': [2, 'multi-or-nest'],
     'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'off',
     'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off'
   },
