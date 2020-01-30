@@ -3,8 +3,12 @@
     <v-btn @click.stop="doUpload" icon text small>
       <v-icon>mdi-upload</v-icon>
     </v-btn>
+    <v-btn @click.stop="exportICS" icon text small>
+      <v-icon>file_download</v-icon>
+    </v-btn>
     <!-- v-model does not work for files -->
     <input type="file" accept=".ics" ref="file" @change="handleICS" hidden />
+    <!-- <a class="d-none" :download="" :href=></a> -->
   </div>
 </template>
 
@@ -18,6 +22,23 @@ export default {
   methods: {
     doUpload() {
       this.$refs.file.click()
+    },
+    async exportICS() {
+      let events = await idb.getEvents()
+      let ical = new ICAL.Component(['vcalendar', [], []])
+      ical.updatePropertyWithValue('prodid', '-//RelaTime Export')
+      for (let event of events) {
+        let clone = JSON.parse(JSON.stringify(event.rrule))
+        for (let rrule of clone) {
+          event.rrule = [rrule]
+          ical.addSubcomponent(utils.eventToComp(event))
+        }
+      }
+      let hiddenElement = document.createElement('a')
+      hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(ical.toString())
+      hiddenElement.target = '_blank'
+      hiddenElement.download = `export-${new Date().getTime()}.ics`
+      hiddenElement.click()
     },
     async handleICS(event) {
       const file = event.target.files[0]
@@ -46,7 +67,6 @@ export default {
 
           event.description.color = colorMap[event.description.course]
         }
-        console.log(eventMap)
         let promises = []
         for (let hash in eventMap)
           promises.push(idb.addEventToDB(eventMap[hash]))

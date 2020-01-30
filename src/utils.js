@@ -30,7 +30,7 @@ export default {
         comp.addProperty(new ICAL.Property(key)).setValues(val)
       else if (key === 'rrule')
         val.map(rrule => comp.addPropertyWithValue(key, rrule))
-      else comp.addPropertyWithValue(key, val || undefined)
+      else comp.addPropertyWithValue(key, val || '')
     }
     return comp
   },
@@ -82,7 +82,7 @@ export default {
       ]
     }
   },
-  * getIterator(event) {
+  *getIterator(event) {
     let result
     let it = new ICAL.Event(this.eventToComp(event)).iterator()
     while ((result = it.next())) yield result.toJSDate()
