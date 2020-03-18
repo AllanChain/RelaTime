@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/4.3.1/workbox-sw.js");
 
 importScripts(
-  "/RelaTime/precache-manifest.d92837d9ec5605558c138ebb9f1c3fcf.js"
+  "/RelaTime/precache-manifest.26663445b960972c3fde6207c5735922.js"
 );
 
 workbox.core.setCacheNameDetails({prefix: "relatime"});

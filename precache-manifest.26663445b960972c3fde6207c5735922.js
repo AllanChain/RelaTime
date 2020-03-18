@@ -1,6 +1,6 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "bc989c01f3fff97744e5",
+    "revision": "485ca1b9cd297078e3a8",
     "url": "/RelaTime/css/app.b706d8fd.css"
   },
   {
@@ -24,12 +24,12 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/RelaTime/fonts/MaterialIcons-Regular.da4ea5cd.ttf"
   },
   {
-    "revision": "23a639c599d8fd321a87f1a50f3c848f",
+    "revision": "ca01397a4b5eb13475294a347178d9b0",
     "url": "/RelaTime/index.html"
   },
   {
-    "revision": "bc989c01f3fff97744e5",
-    "url": "/RelaTime/js/app.fe91f63d.js"
+    "revision": "485ca1b9cd297078e3a8",
+    "url": "/RelaTime/js/app.6b473176.js"
   },
   {
     "revision": "762189233a2192ab5be4",
